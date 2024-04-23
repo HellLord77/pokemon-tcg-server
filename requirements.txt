@@ -1,0 +1,8 @@
+jcc
+lucene
+lupyne
+
+fastapi
+uvicorn[standard]
+
+pokemontcgsdk
