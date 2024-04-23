@@ -1,0 +1,8 @@
+services:
+  server:
+    build:
+      context: .
+    container_name: server
+    image: pokemon-tcg-server
+    ports:
+      - 8000:8000
