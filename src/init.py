@@ -28,7 +28,9 @@ def _dump_schema_resource(resource: SchemaResource, documents: Iterable[dict]):
     resource.schema_builder.dump()
 
 
-def dump_resource(data_dir: str = "data", res_dir: str = config.RESOURCE_DIRECTORY):
+def dump_resource(
+    data_dir: str = config.DATA_DIRECTORY, res_dir: str = config.RESOURCE_DIRECTORY
+):
     logger.debug("dump_resource%s", locals())
     shutil.rmtree(res_dir, ignore_errors=True)
 

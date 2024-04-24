@@ -7,4 +7,5 @@ DEBUG_FASTAPI: Final[bool] = os.getenv("DEBUG_FASTAPI", "false").lower() == "tru
 
 MAX_PAGE_SIZE: Final[int] = int(os.getenv("MAX_PAGE_SIZE", 250))
 
+DATA_DIRECTORY: Final[str] = os.getenv("DATA_DIRECTORY", "data")
 RESOURCE_DIRECTORY: Final[str] = os.getenv("RESOURCE_DIRECTORY", "index")
