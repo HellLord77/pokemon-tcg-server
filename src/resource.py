@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import os.path
-from typing import Iterable
+import urllib.parse
+from typing import Iterable, Optional, Iterator, Any
 from typing import Mapping
+from typing import MutableMapping
+
+from lupyne.engine.documents import Hit
 
 from base import ResourceIndexer
 from common import json
@@ -50,14 +54,50 @@ class SchemaBuilderResource(SimpleResource, SchemaBuilder):
 class SchemaResource(ResourceIndexer):
     RESOURCE: str
 
-    def __init__(self, directory: str, mode: str = "r"):
+    _IMAGE_URL_BASE = "https://images.pokemontcg.io/"
+    _IMAGE_URL_BASE_LEN = len(_IMAGE_URL_BASE)
+
+    def __init__(
+        self, directory: str, mode: str = "r", *, image_url_base: Optional[str] = None
+    ):
         directory = os.path.join(directory, self.RESOURCE)
         super().__init__(directory, mode)
+        self.image_url_base = image_url_base
         self.schema_builder = SchemaBuilderResource(
             os.path.join(directory, "schema.json")
         )
-        self.add_schema = self.schema_builder.add
         self.commit_schema()
+
+    def _replace_image_base_url(self, images: MutableMapping[str, str]):
+        if any(url.startswith(self._IMAGE_URL_BASE) for url in images.values()):
+            for image, url in images.items():
+                images[image] = urllib.parse.urljoin(
+                    self.image_url_base, url[self._IMAGE_URL_BASE_LEN :]
+                )
+
+    def _replace_hit_image_base_urls(self, hit: Mapping[str, Any]) -> Mapping[str, Any]:
+        try:
+            images = hit["images"]
+        except KeyError:
+            pass
+        else:
+            self._replace_image_base_url(images)
+        return hit
+
+    def iter_hits(
+        self,
+        hits: Iterable[Hit],
+        select: Optional[str | Iterable[str]] = None,
+        start: int = 0,
+        stop: Optional[int] = None,
+    ) -> Iterator[dict[str, Any]]:
+        hits = super().iter_hits(hits, select, start, stop)
+        if self.image_url_base is not None:
+            hits = map(self._replace_hit_image_base_urls, hits)
+        return hits
+
+    def add_schema(self, items: Mapping[str, Any]):
+        self.schema_builder.add(items)
 
     def commit_schema(self):
         self.schema_builder.commit(self)
@@ -65,6 +105,21 @@ class SchemaResource(ResourceIndexer):
 
 class CardResource(SchemaResource):
     RESOURCE = "card"
+
+    def _replace_hit_image_base_urls(self, hit: Mapping[str, Any]) -> Mapping[str, Any]:
+        super()._replace_hit_image_base_urls(hit)
+        try:
+            set_ = hit["set"]
+        except KeyError:
+            pass
+        else:
+            try:
+                images = set_["images"]
+            except KeyError:
+                pass
+            else:
+                self._replace_image_base_url(images)
+        return hit
 
 
 class SetResource(SchemaResource):

@@ -27,11 +27,12 @@ from model import SetModel
 from model import StringSetModel
 
 RESOURCES = {}
+DEFAULT_IMAGES_BASE_URL = "https://images.pokemontcg.io/"
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    RESOURCES.update(init.load_resource())
+    RESOURCES.update(init.load_index())
     yield
     RESOURCES.clear()
 
@@ -230,7 +231,7 @@ def get_rarities() -> JSONResponse:
 async def add_runtime_header_middleware(request: Request, call_next):
     start_time = time.monotonic()
     response = await call_next(request)
-    response.headers["x-runtime"] = str(time.monotonic() - start_time)
+    response.headers["X-Runtime"] = str(time.monotonic() - start_time)
     return response
 
 

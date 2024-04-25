@@ -28,26 +28,26 @@ def _dump_schema_resource(resource: SchemaResource, documents: Iterable[dict]):
     resource.schema_builder.dump()
 
 
-def dump_resource(
-    data_dir: str = config.DATA_DIRECTORY, res_dir: str = config.RESOURCE_DIRECTORY
+def dump_index(
+    data_dir: str = config.DATA_DIRECTORY, index_dir: str = config.INDEX_DIRECTORY
 ):
-    logger.debug("dump_resource%s", locals())
-    shutil.rmtree(res_dir, ignore_errors=True)
+    logger.debug("dump_index%s", locals())
+    shutil.rmtree(index_dir, ignore_errors=True)
 
     sets = {}
-    with open(os.path.join(data_dir, "sets/en.json"), "r") as file:
+    with open(os.path.join(data_dir, "sets/en.json"), "rb") as file:
         for set_ in json.load(file):
             sets[set_["id"]] = set_
 
-    type_resource = TypeResource(res_dir)
-    sub_type_resource = SubTypeResource(res_dir)
-    super_type_resource = SuperTypeResource(res_dir)
-    rarity_resource = RarityResource(res_dir)
+    type_resource = TypeResource(index_dir)
+    sub_type_resource = SubTypeResource(index_dir)
+    super_type_resource = SuperTypeResource(index_dir)
+    rarity_resource = RarityResource(index_dir)
 
     cards = []
     for path in glob.glob(os.path.join(data_dir, "cards/en/*.json")):
         set_ = sets[os.path.basename(path).removesuffix(".json")]
-        with open(path, "r") as file:
+        with open(path, "rb") as file:
             for card in json.load(file):
                 card["set"] = set_
                 if "types" in card:
@@ -73,23 +73,34 @@ def dump_resource(
     super_type_resource.dump()
     rarity_resource.dump()
 
-    _dump_schema_resource(CardResource(res_dir, "w"), cards)
-    _dump_schema_resource(SetResource(res_dir, "w"), sets)
+    logger.info("Building card resource")
+    _dump_schema_resource(CardResource(index_dir, "w"), cards)
+
+    logger.info("Building set resource")
+    _dump_schema_resource(SetResource(index_dir, "w"), sets)
 
 
-def load_resource(
-    res_dir: str = config.RESOURCE_DIRECTORY,
+def load_index(
+    index_dir: str = config.INDEX_DIRECTORY,
 ) -> dict[str, SchemaResource | StringSetResource]:
-    logger.debug("load_resource%s", locals())
+    logger.debug("load_index%s", locals())
     return {
-        CardResource.RESOURCE: CardResource(res_dir),
-        SetResource.RESOURCE: SetResource(res_dir),
-        TypeResource.RESOURCE: TypeResource(res_dir),
-        SubTypeResource.RESOURCE: SubTypeResource(res_dir),
-        SuperTypeResource.RESOURCE: SuperTypeResource(res_dir),
-        RarityResource.RESOURCE: RarityResource(res_dir),
+        CardResource.RESOURCE: CardResource(
+            index_dir, image_url_base=config.IMAGE_URL_BASE
+        ),
+        SetResource.RESOURCE: SetResource(
+            index_dir, image_url_base=config.IMAGE_URL_BASE
+        ),
+        TypeResource.RESOURCE: TypeResource(index_dir),
+        SubTypeResource.RESOURCE: SubTypeResource(index_dir),
+        SuperTypeResource.RESOURCE: SuperTypeResource(index_dir),
+        RarityResource.RESOURCE: RarityResource(index_dir),
     }
 
 
+def main():
+    dump_index()
+
+
 if __name__ == "__main__":
-    dump_resource()
+    main()
