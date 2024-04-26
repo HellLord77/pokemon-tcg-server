@@ -34,23 +34,19 @@ RUN ln -s default-java temurin
 
 WORKDIR /server
 
-ENV PATH=/server/venv/bin:$PATH
+FROM stage AS install
 
-FROM stage AS venv
-
-RUN python -m venv venv
 COPY --from=build /pylucene/dist/*.whl .
 COPY requirements.txt .
-RUN . venv/bin/activate && \
-    pip install --no-cache-dir --find-links=. --requirement=requirements.txt
+RUN pip install --no-cache-dir --user --find-links=. --requirement=requirements.txt
 
 FROM stage AS prod
 
-COPY --from=venv /server/venv venv
+COPY --from=install /root/.local /root/.local
 COPY src/*.py .
-RUN . venv/bin/activate
 
 FROM prod AS index
+
 COPY --from=data /git/pokemon-tcg-data data
 RUN python init.py
 
@@ -59,5 +55,5 @@ FROM prod
 COPY --from=index /server/index index
 
 EXPOSE 8000
-ENTRYPOINT ["uvicorn", "main:app"]
+ENTRYPOINT ["/root/.local/bin/uvicorn", "main:app"]
 CMD ["--host=0.0.0.0"]
