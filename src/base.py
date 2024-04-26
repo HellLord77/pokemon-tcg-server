@@ -10,6 +10,7 @@ from typing import Mapping
 from typing import MutableMapping
 from typing import Optional
 
+import jq
 from java.lang import IllegalArgumentException
 from java.util import HashMap
 from lucene import JavaError
@@ -83,7 +84,7 @@ class ResourcePythonComplexPhraseQueryParser(PythonComplexPhraseQueryParserEX):
 
 
 class ResourceIndexer(IndexerEX):
-    FIELD_FLATTENED = "_flattened_"
+    FIELD_RAW = "_raw_"
     FIELD_DEFAULT = "name"
     FIELD_STORED = "id"
 
@@ -197,11 +198,7 @@ class ResourceIndexer(IndexerEX):
 
     get_numeric_like_field = "_{}_".format
 
-    def _flatten(
-        self, obj, root: MutableMapping[str, Any] = None, __parent: str = ""
-    ) -> Any:
-        if root is None:
-            root = {}
+    def _flatten(self, obj, root: MutableMapping[str, Any], __parent: str = "") -> Any:
         if isinstance(obj, (str, int, float, bool)):
             return obj
         elif isinstance(obj, Iterable):
@@ -242,49 +239,23 @@ class ResourceIndexer(IndexerEX):
         return merged
 
     def process(self, items: Mapping[str, Any]) -> dict[str, Any]:
-        flattened = self._flatten(items)
-        flattened[self.FIELD_FLATTENED] = json.dumps(flattened, separators=(",", ":"))
-        return self._merge(flattened)
+        processed = self._merge(self._flatten(items, {}))
+        processed[self.FIELD_RAW] = json.dumps(items, separators=(",", ":"))
+        return processed
 
-    def _filter(self, obj: Mapping[str, Any], selects: Iterable[str]) -> dict[str, Any]:
-        filtered = {}
-        for select in selects:
-            pattern = re.compile(
-                r"^"
-                + rf"(?:{self._SEPARATOR_ESCAPED}\d+)?{self._SEPARATOR_ESCAPED}".join(
-                    map(re.escape, select.split(self._SEPARATOR))
-                )
-                + rf"(?:{self._SEPARATOR_ESCAPED}|$)"
+    @staticmethod
+    def unprocess(obj: str, *filters: str):
+        return next(
+            jq.iter(
+                f"with_entries(select(({') or ('.join(f'.key == {json.dumps(filter_)}' for filter_ in filters)})))",
+                text=obj,
             )
-            for key, val in obj.items():
-                if pattern.match(key):
-                    filtered[key] = val
-        return filtered
+        )
 
-    def _unflatten(self, obj: Mapping[str, Any]) -> dict[str, Any]:
-        unflattened = {}
-        for key, val in obj.items():
-            parts = [
-                int(part) if part.isdigit() else part
-                for part in key.split(self._SEPARATOR)
-            ]
-            parent = unflattened
-            for index, part in enumerate(parts[:-1]):
-                if part not in parent:
-                    parent[part] = (
-                        ResourceList() if isinstance(parts[index + 1], int) else {}
-                    )
-                parent = parent[part]
-            parent[parts[-1]] = val
-        return unflattened
-
-    def unprocess(self, obj: str, select: Optional[Iterable[str]] = None):
-        obj = json.loads(obj)
-        if select:
-            obj = self._filter(obj, select)
-        return self._unflatten(obj)
-
-    unprocess_cached = functools.cache(unprocess)
+    @staticmethod
+    @functools.cache
+    def unprocess_cached(obj: str):
+        return json.loads(obj)
 
     def get_query(self, query: str) -> Query:
         # TODO https://docs.pokemontcg.io/api-reference/cards/search-cards#exact-matching
@@ -321,22 +292,21 @@ class ResourceIndexer(IndexerEX):
         if sort_fields:
             return sort_fields
 
-    def get_filter(self, filters: str | Iterable[str]) -> tuple[str, ...]:
+    def get_filter(self, filters: str | Iterable[str]) -> list[str]:
+        filter_fields = []
         if isinstance(filters, str):
             filters = (filters,)
-        fields = tuple(
-            filter(
-                None,
-                (
-                    part.strip().replace(" ", "")
-                    for part in itertools.chain.from_iterable(
-                        filter_.split(self._DELIMITER) for filter_ in filters
-                    )
-                ),
-            )
-        )
-        logger.debug("get_filter%s", {"return": fields})
-        return fields
+        for part in itertools.chain.from_iterable(
+            filter_.split(self._DELIMITER) for filter_ in filters
+        ):
+            field = part.strip().replace(" ", "")
+            prefix = field + self._SEPARATOR
+            if field in self.fields or any(
+                field_.startswith(prefix) for field_ in self.fields
+            ):
+                filter_fields.append(field)
+        logger.debug("get_filter%s", {"return": filter_fields})
+        return filter_fields
 
     def iter_hits(
         self,
@@ -345,10 +315,9 @@ class ResourceIndexer(IndexerEX):
         start: int = 0,
         stop: Optional[int] = None,
     ) -> Iterator[dict[str, Any]]:
-        if select:
-            select = tuple(self.get_filter(select))
-        unprocessor = self.unprocess if select else self.unprocess_cached
+        filter_ = () if select is None else self.get_filter(select)
+        unprocess = self.unprocess if filter_ else self.unprocess_cached
         return (
-            unprocessor(hit[self.FIELD_FLATTENED], select)
+            unprocess(hit[self.FIELD_RAW], *filter_)
             for hit in itertools.islice(hits, start, stop)
         )

@@ -60,4 +60,4 @@ class SchemaBuilder(dict):
     def commit(self, indexer: ResourceIndexer):
         for name, field_type in self.items():
             _SETTERS[field_type](indexer, name)
-        indexer.set(ResourceIndexer.FIELD_FLATTENED, FieldEX, stored=True)
+        indexer.set(ResourceIndexer.FIELD_RAW, FieldEX, stored=True)
