@@ -27,7 +27,6 @@ from model import SetModel
 from model import StringSetModel
 
 RESOURCES = {}
-DEFAULT_IMAGES_BASE_URL = "https://images.pokemontcg.io/"
 
 
 @asynccontextmanager

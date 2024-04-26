@@ -301,7 +301,4 @@ class ResourceIndexer(IndexerEX):
     ) -> Iterator[dict[str, Any]]:
         filter_ = () if select is None else self.get_filter(select)
         unprocess = self.unprocess if filter_ else self.unprocess_cached
-        return (
-            unprocess(hit[self.FIELD_RAW], *filter_)
-            for hit in itertools.islice(hits, start, stop)
-        )
+        return (unprocess(hit[self.FIELD_RAW], *filter_) for hit in hits[start:stop])
