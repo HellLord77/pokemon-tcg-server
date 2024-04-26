@@ -57,7 +57,7 @@ class SchemaResource(ResourceIndexer):
     _IMAGE_URL_BASE = "https://images.pokemontcg.io/"
     _IMAGE_URL_BASE_LEN = len(_IMAGE_URL_BASE)
 
-    def __init__(  # TODO complex jq
+    def __init__(
         self, directory: str, mode: str = "r", *, image_url_base: Optional[str] = None
     ):
         directory = os.path.join(directory, self.RESOURCE)

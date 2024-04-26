@@ -35,22 +35,6 @@ from core import IndexerEX
 from core import PythonComplexPhraseQueryParserEX
 
 
-class ResourceList(list):
-    def __init__(self):
-        super().__init__()
-        self._key_map = {}
-
-    def __getitem__(self, key):
-        return super().__getitem__(self._key_map[key])
-
-    def __setitem__(self, key, value):
-        self._key_map[key] = len(self)
-        self.append(value)
-
-    def __contains__(self, item):
-        return item in self._key_map
-
-
 class ResourceAnalyzer(AnalyzerEX):
     @classmethod
     def resource(cls, *filters: Callable) -> Analyzer:
