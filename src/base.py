@@ -231,7 +231,7 @@ class ResourceIndexer(IndexerEX):
     def unprocess(obj: str, *filters: str):
         return next(
             jq.iter(
-                f"with_entries(select(({') or ('.join(f'.key == {json.dumps(filter_)}' for filter_ in filters)})))",
+                f"with_entries(select(.key == ({json.dumps(filters)[1:-1]})))",
                 text=obj,
             )
         )
