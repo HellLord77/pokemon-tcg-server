@@ -75,14 +75,14 @@ class SchemaResource(ResourceIndexer):
                     self.image_url_base, url[self._IMAGE_URL_BASE_LEN :]
                 )
 
-    def _replace_hit_image_base_urls(self, hit: Mapping[str, Any]) -> Mapping[str, Any]:
+    def _replace_image_base_urls(self, obj: Mapping[str, Any]) -> Mapping[str, Any]:
         try:
-            images = hit["images"]
+            images = obj["images"]
         except KeyError:
             pass
         else:
             self._replace_image_base_url(images)
-        return hit
+        return obj
 
     def iter_hits(
         self,
@@ -93,7 +93,7 @@ class SchemaResource(ResourceIndexer):
     ) -> Iterator[dict[str, Any]]:
         hits = super().iter_hits(hits, select, start, stop)
         if self.image_url_base is not None:
-            hits = map(self._replace_hit_image_base_urls, hits)
+            hits = map(self._replace_image_base_urls, hits)
         return hits
 
     def add_schema(self, items: Mapping[str, Any]):
@@ -106,10 +106,10 @@ class SchemaResource(ResourceIndexer):
 class CardResource(SchemaResource):
     RESOURCE = "card"
 
-    def _replace_hit_image_base_urls(self, hit: Mapping[str, Any]) -> Mapping[str, Any]:
-        super()._replace_hit_image_base_urls(hit)
+    def _replace_image_base_urls(self, obj: Mapping[str, Any]) -> Mapping[str, Any]:
+        super()._replace_image_base_urls(obj)
         try:
-            set_ = hit["set"]
+            set_ = obj["set"]
         except KeyError:
             pass
         else:
@@ -119,7 +119,7 @@ class CardResource(SchemaResource):
                 pass
             else:
                 self._replace_image_base_url(images)
-        return hit
+        return obj
 
 
 class SetResource(SchemaResource):

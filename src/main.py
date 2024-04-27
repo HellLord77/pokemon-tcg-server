@@ -11,6 +11,7 @@ from fastapi import Path
 from fastapi import Query
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 import config
@@ -41,6 +42,13 @@ app = FastAPI(
     title="Pokémon TCG API",
     lifespan=lifespan,
     responses={fastapi.status.HTTP_200_OK: {"description": description.OK}},
+)
+# noinspection PyTypeChecker
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=(config.CORS_ALLOW_ORIGIN,),
+    allow_methods=("*",),
+    allow_headers=("*",),
 )
 # noinspection PyTypeChecker
 app.add_middleware(GZipMiddleware)
