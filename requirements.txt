@@ -2,8 +2,6 @@ jcc
 lucene
 lupyne
 
-jq
-
 fastapi
 uvicorn[standard]
 
