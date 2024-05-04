@@ -73,10 +73,10 @@ def dump_index(
     super_type_resource.dump()
     rarity_resource.dump()
 
-    logger.info("Building card resource")
+    logger.info("Building card index")
     _dump_schema_resource(CardResource(index_dir, "w"), cards)
 
-    logger.info("Building set resource")
+    logger.info("Building set index")
     _dump_schema_resource(SetResource(index_dir, "w"), sets)
 
 
