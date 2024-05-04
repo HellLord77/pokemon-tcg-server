@@ -6,6 +6,7 @@ from typing import Optional
 
 import fastapi
 import lucene
+import uvicorn
 from fastapi import FastAPI
 from fastapi import Path
 from fastapi import Query
@@ -260,3 +261,11 @@ async def request_validation_error_handler(
     _: Request, __: RequestValidationError
 ) -> NoReturn:
     raise exception.BadRequestException
+
+
+def main():
+    uvicorn.run(app)
+
+
+if __name__ == "__main__":
+    main()
