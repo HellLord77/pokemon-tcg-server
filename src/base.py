@@ -71,6 +71,7 @@ class ResourceIndexer(IndexerEX):
     FIELD_DEFAULT = "name"
     FIELD_STORED = "id"
 
+    _NEGATOR = "-"
     _DELIMITER = ","
     _SEPARATOR = "."
     _SEPARATOR_ESCAPED = re.escape(_SEPARATOR)
@@ -230,12 +231,19 @@ class ResourceIndexer(IndexerEX):
     def _load(self, obj: str) -> dict[str, Any]:
         return json.loads(obj)
 
-    @staticmethod
-    def _select(obj: Mapping[str, Any], selects: Iterable[str]) -> dict[str, Any]:
-        return {key: val for key in selects if (val := obj.get(key)) is not None}
+    @classmethod
+    def _select(
+        cls, obj: Mapping[str, Any], selects: tuple[set[str], set[str]]
+    ) -> dict[str, Any]:
+        for index, select in enumerate(selects):
+            if select:
+                obj = {key: val for key, val in obj.items() if index ^ (key in select)}
+        return obj
 
     def unprocess(
-        self, hit: Mapping[str, Any], selects: Optional[Iterable[str]] = None
+        self,
+        hit: Mapping[str, Any],
+        selects: Optional[tuple[set[str], set[str]]] = None,
     ):
         items = self._load(hit[self.FIELD_RAW])
         if selects:
@@ -270,28 +278,34 @@ class ResourceIndexer(IndexerEX):
             sort.split(self._DELIMITER) for sort in sorts
         ):
             field = part.strip().replace(" ", "")
-            name = field.removeprefix("-")
+            name = field.removeprefix(self._NEGATOR)
             if name in self.fields:
-                sort_fields.append(self.sortfield(name, reverse=field.startswith("-")))
+                sort_fields.append(
+                    self.sortfield(name, reverse=field.startswith(self._NEGATOR))
+                )
         logger.debug("get_sort%s", {"return": sort_fields})
         if sort_fields:
             return sort_fields
 
-    def get_select(self, selects: str | Iterable[str]) -> list[str]:
-        select_fields = []
+    def get_select(
+        self, selects: str | Iterable[str]
+    ) -> Optional[tuple[set[str], set[str]]]:
+        select_fields = set(), set()
         if isinstance(selects, str):
             selects = (selects,)
         for part in itertools.chain.from_iterable(
             select.split(self._DELIMITER) for select in selects
         ):
             field = part.strip().replace(" ", "")
-            prefix = field + self._SEPARATOR
-            if field in self.fields or any(
+            name = field.removeprefix(self._NEGATOR)
+            prefix = name + self._SEPARATOR
+            if name in self.fields or any(
                 field_.startswith(prefix) for field_ in self.fields
             ):
-                select_fields.append(field)
+                select_fields[field.startswith(self._NEGATOR)].add(name)
         logger.debug("get_select%s", {"return": select_fields})
-        return select_fields
+        if any(select_fields):
+            return select_fields
 
     def iter_hits(
         self,

@@ -55,7 +55,6 @@ class SchemaResource(ResourceIndexer):
     RESOURCE: str
 
     _IMAGE_URL_BASE = "https://images.pokemontcg.io/"
-    _IMAGE_URL_BASE_LEN = len(_IMAGE_URL_BASE)
 
     def __init__(
         self, directory: str, mode: str = "r", *, image_url_base: Optional[str] = None
@@ -72,7 +71,7 @@ class SchemaResource(ResourceIndexer):
         if any(url.startswith(self._IMAGE_URL_BASE) for url in images.values()):
             for image, url in images.items():
                 images[image] = urllib.parse.urljoin(
-                    self.image_url_base, url[self._IMAGE_URL_BASE_LEN :]
+                    self.image_url_base, url.removeprefix(self._IMAGE_URL_BASE)
                 )
 
     def _replace_image_base_urls(self, obj: Mapping[str, Any]) -> Mapping[str, Any]:
