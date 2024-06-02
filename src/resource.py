@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import os.path
 import urllib.parse
 from typing import Iterable, Optional, Iterator, Any
@@ -57,10 +58,19 @@ class SchemaResource(ResourceIndexer):
     _IMAGE_URL_BASE = "https://images.pokemontcg.io/"
 
     def __init__(
-        self, directory: str, mode: str = "r", *, image_url_base: Optional[str] = None
+        self,
+        directory: str,
+        mode: str = "r",
+        *,
+        search_count: Optional[int] = None,
+        search_timeout: Optional[int] = None,
+        image_url_base: Optional[str] = None,
     ):
         directory = os.path.join(directory, self.RESOURCE)
         super().__init__(directory, mode)
+        self.indexSearcher.search = functools.partial(
+            self.indexSearcher.search, count=search_count, timeout=search_timeout
+        )
         self.image_url_base = image_url_base
         self.schema_builder = SchemaBuilderResource(
             os.path.join(directory, "schema.json")

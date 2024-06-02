@@ -86,10 +86,16 @@ def load_index(
     logger.debug("load_index%s", locals())
     return {
         CardResource.RESOURCE: CardResource(
-            index_dir, image_url_base=config.IMAGE_URL_BASE
+            index_dir,
+            search_count=config.LUCENE_COUNT,
+            search_timeout=config.LUCENE_TIMEOUT,
+            image_url_base=config.IMAGE_URL_BASE,
         ),
         SetResource.RESOURCE: SetResource(
-            index_dir, image_url_base=config.IMAGE_URL_BASE
+            index_dir,
+            search_count=config.LUCENE_COUNT,
+            search_timeout=config.LUCENE_TIMEOUT,
+            image_url_base=config.IMAGE_URL_BASE,
         ),
         TypeResource.RESOURCE: TypeResource(index_dir),
         SubTypeResource.RESOURCE: SubTypeResource(index_dir),

@@ -39,10 +39,10 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    debug=config.DEBUG_FASTAPI,
-    title="Pokémon TCG API",
+    debug=config.FASTAPI_DEBUG,
+    title=description.TITLE,
     lifespan=lifespan,
-    responses={fastapi.status.HTTP_200_OK: {"description": description.OK}},
+    responses={fastapi.status.HTTP_200_OK: {"description": description.ERROR_200}},
 )
 # noinspection PyTypeChecker
 app.add_middleware(
@@ -57,39 +57,39 @@ app.add_middleware(GZipMiddleware)
 _ = {
     fastapi.status.HTTP_400_BAD_REQUEST: {
         "model": ExceptionModel,
-        "description": description.BAD_REQUEST,
+        "description": description.ERROR_400,
     },
     fastapi.status.HTTP_402_PAYMENT_REQUIRED: {
         "model": ExceptionModel,
-        "description": description.REQUEST_FAILED,
+        "description": description.ERROR_402,
     },
     fastapi.status.HTTP_403_FORBIDDEN: {
         "model": ExceptionModel,
-        "description": description.FORBIDDEN,
+        "description": description.ERROR_403,
     },
     fastapi.status.HTTP_404_NOT_FOUND: {
         "model": ExceptionModel,
-        "description": description.NOT_FOUND,
+        "description": description.ERROR_404,
     },
     fastapi.status.HTTP_429_TOO_MANY_REQUESTS: {
         "model": ExceptionModel,
-        "description": description.TOO_MANY_REQUESTS,
+        "description": description.ERROR_429,
     },
     fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR: {
         "model": ExceptionModel,
-        "description": description.SERVER_ERROR,
+        "description": description.ERROR_500,
     },
     fastapi.status.HTTP_502_BAD_GATEWAY: {
         "model": ExceptionModel,
-        "description": description.SERVER_ERROR,
+        "description": description.ERROR_500,
     },
     fastapi.status.HTTP_503_SERVICE_UNAVAILABLE: {
         "model": ExceptionModel,
-        "description": description.SERVER_ERROR,
+        "description": description.ERROR_500,
     },
     fastapi.status.HTTP_504_GATEWAY_TIMEOUT: {
         "model": ExceptionModel,
-        "description": description.SERVER_ERROR,
+        "description": description.ERROR_500,
     },
 }
 
@@ -244,7 +244,7 @@ async def add_runtime_header_middleware(request: Request, call_next):
 
 
 @app.exception_handler(Exception)
-async def exception_handler(request: Request, __: Exception) -> JSONResponse:
+async def exception_handler(request: Request, _: Exception) -> JSONResponse:
     return await exception_ex_handler(request, exception.ServerErrorException)
 
 
