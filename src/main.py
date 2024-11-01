@@ -48,8 +48,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=(config.CORS_ALLOW_ORIGIN,),
-    allow_methods=("*",),
-    allow_headers=("*",),
+    allow_methods=(config.CORS_ALLOW_METHOD,),
+    allow_headers=(config.CORS_ALLOW_HEADER,),
 )
 # noinspection PyTypeChecker
 app.add_middleware(GZipMiddleware)

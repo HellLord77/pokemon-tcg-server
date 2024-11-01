@@ -13,5 +13,8 @@ DATA_DIRECTORY: Final[str] = os.getenv("DATA_DIRECTORY", "data")
 INDEX_DIRECTORY: Final[str] = os.getenv("INDEX_DIRECTORY", "index")
 
 CORS_ALLOW_ORIGIN: Final[str] = os.getenv("CORS_ALLOW_ORIGIN", "*")
+CORS_ALLOW_METHOD: Final[str] = os.getenv("CORS_ALLOW_METHOD", "*")
+CORS_ALLOW_HEADER: Final[str] = os.getenv("CORS_ALLOW_HEADER", "*")
+
 MAX_PAGE_SIZE: Final[int] = int(os.getenv("MAX_PAGE_SIZE", 250))
 IMAGE_URL_BASE: Final[Optional[str]] = os.getenv("IMAGE_URL_BASE")
