@@ -1,4 +1,4 @@
-jcc
+jcc==3.14
 lucene
 lupyne
 

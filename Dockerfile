@@ -6,7 +6,7 @@ RUN git clone https://github.com/PokemonTCG/pokemon-tcg-data.git && \
     ([[ "$TAG" = "latest" ]] || git checkout ${TAG}) && \
     rm -rf .git
 
-FROM python AS build
+FROM python:3.10 AS build
 
 RUN apt update && \
     apt install -y default-jdk
@@ -15,7 +15,7 @@ WORKDIR /usr/lib/jvm
 RUN ln -s default-java temurin
 
 WORKDIR /pylucene
-RUN curl https://dlcdn.apache.org/lucene/pylucene/pylucene-9.10.0-src.tar.gz | \
+RUN curl https://dlcdn.apache.org/lucene/pylucene/pylucene-9.12.0-src.tar.gz | \
     tar -xz --strip-components=1
 RUN cd jcc && \
     JCC_JDK=/usr/lib/jvm/temurin pip wheel --no-cache-dir --no-deps --wheel-dir=../dist . && \
@@ -24,7 +24,7 @@ COPY patch/ /
 RUN pip install --no-cache-dir build && \
     PYTHON=python JCC='python -m jcc' NUM_FILES=16 MODERN_PACKAGING=true make
 
-FROM python:slim AS stage
+FROM python:3.10-slim AS stage
 
 RUN apt update && \
     apt install -y default-jre
