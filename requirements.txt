@@ -1,8 +1,9 @@
-jcc==3.14
 lucene
-lupyne
 
-fastapi
-uvicorn[standard]
+jcc==3.14
+lupyne==3.3
+
+fastapi==0.119.0
+uvicorn[standard]==0.38.0
 
 pokemontcgsdk
